@@ -35,6 +35,7 @@ class User(db.Model):
     
     wishlist: Mapped[List["Wishlist"]] = relationship(back_populates = "user", cascade="all, delete-orphan")
     cart : Mapped[List["Cart"]] = relationship(back_populates = "user", cascade="all, delete-orphan")
+    profile: Mapped["Profile"] = relationship(back_populates = "user", cascade="all, delete-orphan")
 
 
 product_category = db.Table(
@@ -50,6 +51,33 @@ wishlist_product = db.Table(
     db.Column("wishlist_id", db.Integer, db.ForeignKey("wishlists.id"), primary_key=True)
     
 )
+
+class Profile(db.Model):
+    __tablename__ = 'profiles'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    phone: Mapped[str] = mapped_column(String(120))
+    street: Mapped[str] = mapped_column(String(120))
+    neighborhood: Mapped[str] = mapped_column(String(120))
+    postal_code : Mapped[int] = mapped_column(Integer)
+    city: Mapped[str] = mapped_column(String(120))
+    country:Mapped[str] = mapped_column(String(120))
+    references: Mapped[str] = mapped_column(String(120))
+
+    def serialize(self):
+        return{
+            "id":self.id,
+            "phone":self.phone,
+            "street": self.phone,
+            "neighborhood": self.neighborhood,
+            "postalCode": self.postal_code,
+            "city": self.city,
+            "country": self.country,
+            "references":self.references
+
+        }
+
+    user: Mapped["User"] = relationship(back_populates = "profile")
+    
 
 class Product(db.Model):
     __tablename__ = "products"
@@ -115,9 +143,11 @@ class Cart(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key = True)
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int| None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    guest_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     user : Mapped["User"] = relationship(back_populates = "cart")
-    items : Mapped[List["CartItem"]] = relationship(back_populates = "cart")
+    items : Mapped[List["CartItem"]] = relationship(back_populates = "cart", cascade="all, delete-orphan")
+    cascade="all, delete-orphan"
 
     def serialize(self):
         return{
@@ -153,7 +183,45 @@ class ProductImage(db.Model):
     id: Mapped[int] = mapped_column(primary_key= True)
     url:Mapped[str] = mapped_column(String(255), nullable= False)
 
-    product_id = Mapped[int] = mapped_column( ForeignKey("products.id"), nullable=False )
+    product_id: Mapped[int] = mapped_column( ForeignKey("products.id"), nullable=False )
 
     product: Mapped["Product"] = relationship(back_populates="images")
+
+
+class Order(db.Model):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    guest_email: Mapped[str | None] = mapped_column(String(120))
+
+    total: Mapped[int] = mapped_column(Integer)
+
+    status: Mapped[str] = mapped_column(String(30), default="pending")
+
+    created_at: Mapped[datetime] = mapped_column( DateTime, default= datetime.now)
+
+    items: Mapped[List["OrderItem"]] = relationship(back_populates= "order", cascade = "all, delete-orphan")
+
+
+class OrderItem(db.Model):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+
+    quantity: Mapped[int] = mapped_column(Integer)
+
+    snapshot_price:Mapped[int] = mapped_column(Integer)
+
+    order: Mapped["Order"] = relationship(back_populates="items")
+
 
