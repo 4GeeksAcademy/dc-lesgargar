@@ -10,7 +10,7 @@ def get_users():
     return jsonify([u.serialize() for u in users]), 200
 
 
-@users_bp.route("/users", methods=["POST"])
+@users_bp.route("/", methods=["POST"])
 def create_user():
     data = request.json
 

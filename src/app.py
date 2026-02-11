@@ -8,14 +8,10 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-#Importar los modelos:
-from models import db, User, Product, Category, Wishlist, Cart, CartItem, ProductImage, Profile
+from models import db
 
 #import routes:
-from routes.users import users_bp
-
-
-
+from routes import (users_bp, products_bp, cart_bp, wishlist_bp)
 
 
 app = Flask(__name__)
@@ -23,6 +19,9 @@ app.url_map.strict_slashes = False
 
 #register blueprints
 app.register_blueprint(users_bp)
+app.register_blueprint(products_bp)
+app.register_blueprint(cart_bp)
+app.register_blueprint(wishlist_bp)
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:

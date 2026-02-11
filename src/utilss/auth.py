@@ -2,7 +2,7 @@
 
 from functools import wraps
 from flask import request, jsonify
-from models import User
+from models import User, db
 
 #Get current user:  -----------------se va a cambiar por JTW-----------------------
 
@@ -11,18 +11,17 @@ def get_current_user():
     if not user_id:
         return None
     
-    return User.query.get(user_id)
+    return db.session.get(User, int(user_id))
 
 
 
-#Verified users
+#Verified users / permissions
 def login_required(funct):
     @wraps(funct)
 
     def wrapper(*args, **kwargs):
         user = get_current_user()
-
-        if not user:
+        if user is None:
             return jsonify({"error":"Unauthorized user"}), 401
         
         return funct(user, *args, **kwargs )

@@ -62,6 +62,8 @@ class Profile(db.Model):
     city: Mapped[str] = mapped_column(String(120))
     country:Mapped[str] = mapped_column(String(120))
     references: Mapped[str] = mapped_column(String(120))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
 
     def serialize(self):
         return{
@@ -131,11 +133,23 @@ class Wishlist(db.Model):
     #users.id es porque asi se llama el __tablename__
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship(back_populates = "wishlist")
+    items : Mapped[List["WishlistItem"]] = relationship(back_populates= "wishlist", cascade="all, delete-orphan")
 
     def serialize(self):
         return{
             "id":self.id
         }
+
+class WishlistItem(db.Model):
+    __tablename__ = "wishlist_item"
+
+    wishlist_id : Mapped[int] = mapped_column(ForeignKey("wishlists.id"), primary_key = True)
+    product_id : Mapped[int] = mapped_column(ForeignKey("products.id"), primary_key=True)
+    added_on: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    wishlist: Mapped["Wishlist"] = relationship(back_populates = "items")
+    prdoduct: Mapped["Product"] = relationship()
+
+
 
 
 class Cart(db.Model):
@@ -168,6 +182,8 @@ class CartItem(db.Model):
 
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     added_on: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    snapshot_price: Mapped[int] = mapped_column(Integer, nullable=True)
+
 
     cart: Mapped["Cart"] = relationship(back_populates = "items")
     product: Mapped["Product"] = relationship()
