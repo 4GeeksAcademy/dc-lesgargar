@@ -1,17 +1,25 @@
-#Here wew verify the rol 
+#Role verification
 
 from functools import wraps
 from flask import request, jsonify
 from models import User, db
+from utilss.jwt import decode_token
 
-#Get current user:  -----------------se va a cambiar por JTW-----------------------
 
 def get_current_user():
-    user_id = request.headers.get("X-User-Id")
-    if not user_id:
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
         return None
-    
-    return db.session.get(User, int(user_id))
+
+    try:
+        token = auth_header.split(" ")[1]
+        data = decode_token(token)
+        user = db.session.get(User, data["user_id"])
+        return user
+    except:
+        return None
 
 
 
@@ -26,6 +34,7 @@ def login_required(funct):
         
         return funct(user, *args, **kwargs )
     
+
     return wrapper
 
 
@@ -44,3 +53,4 @@ def admin_required(funct):
 
     return wrapper
     
+#

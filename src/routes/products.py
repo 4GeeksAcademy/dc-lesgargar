@@ -36,7 +36,8 @@ def get_product_details(product_id):
 
 #--Post products for ADMIN user only--
 @products_bp.route("/products", methods=["POST"])
-def new_product():
+@admin_required
+def new_product(user):
     data = request.json
 
     product = Product(

@@ -6,7 +6,7 @@ from models import CartItem, db
 
 
 #Create blueprint to be imported to init and finally to app.py
-cart_bp = Blueprint("cart", __name__, url_prefix="/api/carts")
+cart_bp = Blueprint("cart", __name__, url_prefix="/carts")
 
 @cart_bp.route("/", methods=["GET"])
 

@@ -1,11 +1,17 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Integer, DateTime
+from sqlalchemy import String, Boolean, Text, ForeignKey, Integer, DateTime, MetaData
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from typing import List
 from enum import Enum
 
-db = SQLAlchemy()
+convention = {
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+}
+
+metadata = MetaData(naming_convention=convention)
+
+db = SQLAlchemy(metadata=metadata)
 
 class UserRole(Enum):
     ADMIN = "admin"
@@ -20,9 +26,9 @@ class User(db.Model):
     name: Mapped[str] = mapped_column(
         String(120), nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
-
-    role: Mapped[str] = mapped_column(String(120), default="customer", nullable= False)
+    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default= True, server_default="true")
+    is_verified: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False,  server_default="false")
+    role: Mapped[str] = mapped_column(String(120), default="customer")
 
     def serialize(self):
         return {
@@ -35,7 +41,7 @@ class User(db.Model):
     
     wishlist: Mapped[List["Wishlist"]] = relationship(back_populates = "user", cascade="all, delete-orphan")
     cart : Mapped[List["Cart"]] = relationship(back_populates = "user", cascade="all, delete-orphan")
-    profile: Mapped["Profile"] = relationship(back_populates = "user", cascade="all, delete-orphan")
+    profile: Mapped["Profile"] = relationship(back_populates = "user", cascade="all, delete-orphan", uselist=False)
 
 
 product_category = db.Table(
@@ -64,12 +70,11 @@ class Profile(db.Model):
     references: Mapped[str] = mapped_column(String(120))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
-
     def serialize(self):
         return{
             "id":self.id,
             "phone":self.phone,
-            "street": self.phone,
+            "street": self.street,
             "neighborhood": self.neighborhood,
             "postalCode": self.postal_code,
             "city": self.city,
@@ -131,7 +136,7 @@ class Wishlist(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key = True)
     #users.id es porque asi se llama el __tablename__
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship(back_populates = "wishlist")
     items : Mapped[List["WishlistItem"]] = relationship(back_populates= "wishlist", cascade="all, delete-orphan")
 
@@ -143,13 +148,11 @@ class Wishlist(db.Model):
 class WishlistItem(db.Model):
     __tablename__ = "wishlist_item"
 
-    wishlist_id : Mapped[int] = mapped_column(ForeignKey("wishlists.id"), primary_key = True)
-    product_id : Mapped[int] = mapped_column(ForeignKey("products.id"), primary_key=True)
+    wishlist_id : Mapped[int] = mapped_column(ForeignKey("wishlists.id"), primary_key = True, nullable=False)
+    product_id : Mapped[int] = mapped_column(ForeignKey("products.id"), primary_key=True, nullable=False)
     added_on: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     wishlist: Mapped["Wishlist"] = relationship(back_populates = "items")
     prdoduct: Mapped["Product"] = relationship()
-
-
 
 
 class Cart(db.Model):
@@ -173,11 +176,11 @@ class CartItem(db.Model):
     __tablename__ = "cart_item"
 
     cart_id: Mapped[int] = mapped_column(
-        ForeignKey("carts.id"), primary_key=True
+        ForeignKey("carts.id"), primary_key=True, nullable=False
     )
 
     product_id: Mapped[int] = mapped_column(
-        ForeignKey("products.id"), primary_key=True
+        ForeignKey("products.id"), primary_key=True, nullable=False
     )
 
     quantity: Mapped[int] = mapped_column(Integer, default=1)
@@ -230,9 +233,9 @@ class OrderItem(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False)
 
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
 
     quantity: Mapped[int] = mapped_column(Integer)
 
