@@ -62,13 +62,9 @@ def create_user():
 
 
 
-@users_bp.route("/users/<int:user_id>", methods=["GET"])
-def get_user(user_id):
-    user = User.query.get(user_id)
-
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
+@users_bp.route("/me", methods=["GET"])
+@login_required
+def get_user(user):
     return jsonify(user.serialize()), 200
 
 #editar user 
