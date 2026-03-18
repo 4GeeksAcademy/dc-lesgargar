@@ -53,4 +53,24 @@ def admin_required(funct):
 
     return wrapper
     
-#
+#optional
+def login_optional(funct):
+    @wraps(funct)
+    def wrapper(*args, **kwargs):
+        auth = request.headers.get("Authorization")
+
+        if not auth or not auth.startswith("Bearer "):
+            return funct(None, *args, **kwargs)
+
+        if not auth:
+            return funct(None, *args, **kwargs)
+        try:
+            token = auth.split(" ")[1]
+            payload = decode_token(token)
+
+            user = User.query.get(payload["user_id"])
+            return funct(user, *args, **kwargs)
+        
+        except Exception:
+            return funct(None, *args, **kwargs)
+    return wrapper

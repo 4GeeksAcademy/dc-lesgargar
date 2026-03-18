@@ -227,6 +227,17 @@ class Order(db.Model):
 
     items: Mapped[List["OrderItem"]] = relationship(back_populates= "order", cascade = "all, delete-orphan")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "guest_email": self.guest_email,
+            "total": self.total,
+            "status": self.status,
+            "created_at": self.created_at,
+            "items": [item.serialize() for item in self.items]
+        }
+
 
 class OrderItem(db.Model):
     __tablename__ = "order_items"
@@ -242,5 +253,12 @@ class OrderItem(db.Model):
     snapshot_price:Mapped[int] = mapped_column(Integer)
 
     order: Mapped["Order"] = relationship(back_populates="items")
+
+    def serialize(self):
+        return {
+            "product_id": self.product_id,
+            "quantity": self.quantity,
+            "price": self.snapshot_price
+        }
 
 

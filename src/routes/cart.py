@@ -1,6 +1,7 @@
 #Cart routes
 from flask import Blueprint, jsonify, request
 from utilss.cart import get_or_create_cart
+from utilss.auth import login_optional
 from models import CartItem, db
 
 
@@ -9,17 +10,17 @@ from models import CartItem, db
 cart_bp = Blueprint("cart", __name__, url_prefix="/carts")
 
 @cart_bp.route("/", methods=["GET"])
-
-def get_cart():
+@login_optional
+def get_cart(user):
 
     #get_or_create validates user, guest and if cart exists, if not, it will be created
-    cart, guest_token = get_or_create_cart()
+    cart, guest_token = get_or_create_cart(user)
 
     return jsonify({
         "cart_id":cart.id,
         "items":[
             {
-            "product.id":item.product_id,
+            "product_id":item.product_id,
             "name":item.product.name,
             "price":item.product.price,
             "quantity": item.quantity,
@@ -36,7 +37,8 @@ def get_cart():
 
 #add products to the cart
 @cart_bp.route("/items", methods=["POST"])
-def add_item():
+@login_optional
+def add_item(user):
     data = request.json
     product_id = data.get("product_id")
     quantity = data.get("quantity", 1)
@@ -44,7 +46,7 @@ def add_item():
     if not product_id:
         return jsonify({"error":"product_id required"}), 400
     
-    cart, guest_token = get_or_create_cart()
+    cart, guest_token = get_or_create_cart(user)
 
     item = CartItem.query.filter_by(
         cart_id = cart.id,
@@ -74,15 +76,15 @@ def add_item():
 
 #edit cart
 @cart_bp.route("/items/<int:product_id>", methods = ["PUT"])
-
-def update_item(product_id):
+@login_optional
+def update_item(user, product_id):
     data = request.json
     quantity = data.get("quantity")
 
     if quantity is None or quantity < 1:
         return jsonify({"error":"empty qty"}), 400
     
-    cart, _ = get_or_create_cart()
+    cart, _ = get_or_create_cart(user)
 
     item = CartItem.query.filter_by(
         cart_id = cart.id,
@@ -92,7 +94,7 @@ def update_item(product_id):
     if not item:
         return jsonify({"error":"Item not found"}),404
     
-    item.quantity =quantity
+    item.quantity = quantity
     db.session.commit()
 
     return jsonify({"msg":"Item updated"}),200
@@ -100,8 +102,9 @@ def update_item(product_id):
 
 #delete items from cart 
 @cart_bp.route("/items/<int:product_id>", methods=["DELETE"])
-def remove_item(product_id):
-    cart, _ = get_or_create_cart()
+@login_optional
+def remove_item(user, product_id):
+    cart, _ = get_or_create_cart(user)
 
     item = CartItem.query.filter_by(
         cart_id = cart.id,
@@ -118,9 +121,9 @@ def remove_item(product_id):
 
 #Empty cart
 @cart_bp.route("/", methods=["DELETE"])
-
-def clear_cart():
-    cart, _ = get_or_create_cart()
+@login_optional
+def clear_cart(user):
+    cart, _ = get_or_create_cart(user)
 
     CartItem.query.filter_by(cart_id = cart.id).delete()
     db.session.commit()

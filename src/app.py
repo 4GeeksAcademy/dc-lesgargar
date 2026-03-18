@@ -11,7 +11,7 @@ from admin import setup_admin
 from models import db
 
 #import routes:
-from routes import (users_bp, products_bp, cart_bp, wishlist_bp, auth_bp)
+from routes import (users_bp, products_bp, cart_bp, wishlist_bp, auth_bp, orders_bp)
 
 
 app = Flask(__name__)
@@ -23,6 +23,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(products_bp)
 app.register_blueprint(cart_bp)
 app.register_blueprint(wishlist_bp)
+app.register_blueprint(orders_bp)
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
