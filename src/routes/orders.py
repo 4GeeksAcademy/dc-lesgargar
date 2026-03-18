@@ -77,10 +77,16 @@ def get_order(user, order_id):
 
     order = Order.query.get(order_id)
 
-    if not order or order.user_id != user.id:
+    if not order:
         return jsonify({"error": "Order not found"}), 404
-
-    return jsonify(order.serialize()), 200
+    
+    if user.role == "admin":
+        return jsonify(order.serialize()),200
+    
+    if order.user_id != user.id:
+        return jsonify({"msg":"Unauthorized"}), 403
+    
+    return jsonify(order.serialize()),200
 
 
 #update order status only for admin 
@@ -91,12 +97,16 @@ def update_order(admin, order_id):
 
     order = Order.query.get(order_id)
 
+
     if not order:
         return jsonify({"error": "Order not found"}), 404
 
     data = request.json
 
+    valid_status = ["pending", "paid", "shipped", "delivered", "cancelled"]
     if "status" in data:
+        if data["status"] not in valid_status:
+            return jsonify({"msg":"Invalid status"}), 400
         order.status = data["status"]
 
     db.session.commit()
