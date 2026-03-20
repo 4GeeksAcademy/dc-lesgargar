@@ -23,7 +23,6 @@ def get_products():
 
 
 @products_bp.route("/products/<int:product_id>", methods=["GET"])
-@admin_required
 def get_product_details(product_id):
     product = Product.query.get_or_404(product_id)
     return jsonify({
@@ -45,16 +44,25 @@ def new_product(user):
         description = data["description"],
         price = data["price"]
     )
+
     db.session.add(product)
+    db.session.flush()
+
+    images = data.get("images", None)
+
+    if images:
+        for url in images:
+            product.images.append(ProductImage(url=url))
+
     db.session.commit()
 
-    return jsonify(product.serialize()), 201
+    return jsonify({**product.serialize(), "images":images or []}), 201
 
 
 #--Edit a product only ADMIN--
 @products_bp.route("/products/<int:product_id>", methods = ["PUT"])
 @admin_required
-def edit_product(product_id):
+def edit_product(user, product_id):
     product = Product.query.get_or_404(product_id)
     data = request.json
 
@@ -69,7 +77,7 @@ def edit_product(product_id):
 #--Delete a product only ADMIN --
 @products_bp.route("/products/<int:product_id>", methods=["DELETE"])
 @admin_required
-def delete_product(product_id):
+def delete_product(user, product_id):
     product  = Product.query.get_or_404(product_id)
 
     db.session.delete(product)
