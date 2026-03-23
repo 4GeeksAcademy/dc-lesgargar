@@ -206,6 +206,14 @@ class ProductImage(db.Model):
 
     product: Mapped["Product"] = relationship(back_populates="images")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "url": self.url,
+            "product_id": self.product_id
+        }
+    
+
 
 class Order(db.Model):
     __tablename__ = "orders"
