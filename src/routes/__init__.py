@@ -5,3 +5,4 @@ from .wishlist import wishlist_bp
 from .profile import profile_bp
 from .auth import auth_bp
 from .orders import orders_bp
+from .categories import categories_bp

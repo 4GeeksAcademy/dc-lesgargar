@@ -117,18 +117,18 @@ class Category(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key = True)
     name: Mapped[str] = mapped_column(String(120), unique = True, nullable = False)
-
+    products = db.relationship(
+        "Product",
+        secondary = product_category,
+        back_populates = "categories"
+    )
     def serialize(self):
         return{
             "id": self.id,
             "name":self.name
         }
 
-    products = db.relationship(
-        "Product",
-        secondary = product_category,
-        back_populates = "categories"
-    )
+
 
 #Favorites list model
 class Wishlist(db.Model):
@@ -153,7 +153,6 @@ class WishlistItem(db.Model):
     added_on: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     wishlist: Mapped["Wishlist"] = relationship(back_populates = "items")
     prdoduct: Mapped["Product"] = relationship()
-
 
 class Cart(db.Model):
     __tablename__ = "carts"
@@ -213,8 +212,6 @@ class ProductImage(db.Model):
             "product_id": self.product_id
         }
     
-
-
 class Order(db.Model):
     __tablename__ = "orders"
 
@@ -245,7 +242,6 @@ class Order(db.Model):
             "created_at": self.created_at,
             "items": [item.serialize() for item in self.items]
         }
-
 
 class OrderItem(db.Model):
     __tablename__ = "order_items"

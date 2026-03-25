@@ -14,7 +14,7 @@ def checkout(user):
     #step1 get cart
     cart, guest_token = get_or_create_cart(user)
 
-    if not cart. items:
+    if not cart.items:
         return jsonify({"msg":"Cart is empty"}), 400
     
     #creeate order 
