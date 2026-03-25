@@ -41,6 +41,16 @@ def new_product(user):
         description = data["description"],
         price = data["price"]
     )
+    
+    category_ids = data.get("category_ids", [])
+    if category_ids:
+        categories = Category.query.filter(Category.id.in_(category_ids)).all()
+
+        if len(categories) != len(set(category_ids)):
+            return jsonify({"msg": "One or more categories do not exist"}), 404
+
+        product.categories = categories
+
 
     db.session.add(product)
     db.session.flush()
@@ -122,3 +132,32 @@ def delete_image(user, image_id):
     db.session.commit()
 
     return jsonify({"msg":"image deleted",}),200
+
+#edit product_category
+@products_bp.route("/products/<int:product_id>/categories", methods=["PUT"])
+@admin_required
+def update_product_categories(user, product_id):
+    product = Product.query.get_or_404(product_id)
+    data = request.json
+
+    category_ids = data.get("category_ids", None)
+
+    if category_ids is None:
+        return jsonify({"msg": "category_ids is required"}), 400
+
+    if not isinstance(category_ids, list):
+        return jsonify({"msg": "category_ids must be a list"}), 400
+
+    categories = Category.query.filter(Category.id.in_(category_ids)).all()
+
+    if len(categories) != len(set(category_ids)):
+        return jsonify({"msg": "One or more categories do not exist"}), 404
+
+    product.categories = categories
+
+    db.session.commit()
+
+    return jsonify({
+        **product.serialize(),
+        "categories": [category.serialize() for category in product.categories]
+    }), 200
