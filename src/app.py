@@ -15,6 +15,7 @@ from routes import (users_bp, products_bp, cart_bp, wishlist_bp, auth_bp, orders
 
 
 app = Flask(__name__)
+
 app.url_map.strict_slashes = False
 
 #register blueprints
